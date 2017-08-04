@@ -6,26 +6,23 @@ import datetime
 
 API_BASE = "http://api.tvmaze.com/"
 
-# Input the ID for your particular skill here
-SKILL_ID = ""
-
 def lambda_handler(event, context):
-    if (event['session']['application']['applicationId'] != SKILL_ID):
+    if (event['session']['application']['applicationId'] != "amzn1.ask.skill.c73a51ae-b7c0-4082-b1d8-55a357eddae5"):
         raise ValueError("Invalid Application ID")
         
     ## Handle the bare launch intent
     if(event["request"]["type"] == "LaunchRequest"):
-        return build_response("T.V. Last", "Welcome to T.V. Last. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", True)
+        return build_response("Last Episode", "Welcome to Last Episode. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", True)
         
     intent_name = event["request"]["intent"]["name"]
     
     ## Handle the help intent
     if intent_name == "AMAZON.HelpIntent":
-        return build_response("T.V. Last", "Welcome to T.V. Last. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", True)
+        return build_response("Last Episode", "Welcome to Last Episode. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", True)
     
     ## Handle the stop intent
     elif intent_name == "AMAZON.StopIntent" or intent_name == "AMAZON.CancelIntent":
-        return build_response( "Thanks!", "Thanks for using T.V. Last. Goodbye!", True)
+        return build_response( "Thanks!", "Thanks for using Last Episode. Goodbye!", True)
     
     elif intent_name == "GetLastEpisodeIntent":
         return query_series(event["request"]["intent"]["slots"]["series_name"]["value"])
@@ -38,7 +35,7 @@ def query_series(series_name):
     api_url = API_BASE + "singlesearch/shows?" + urllib.urlencode({"q": series_name})
     
     response = urllib2.urlopen(api_url)
-	
+    
     series_data = json.load(response)
 
     prev_ep_link = series_data["_links"]["previousepisode"]["href"]
@@ -57,27 +54,24 @@ def query_series(series_name):
     
 def build_response( title, output_text, should_end_session ):
     return {
-	  "version": "1.0",
-	  "response": {
-	    "outputSpeech": {
-	      "type": "PlainText",
-	      "text": output_text
-	    },
-	    "card": {
-	      "content": output_text,
-	      "title": title,
-	      "type": "Simple"
-	    },
-	    "reprompt": {
-	      "outputSpeech": {
-	        "type": "PlainText",
-	        "text": ""
-	      }
-	    },
-	    "shouldEndSession": should_end_session
-	  },
-	  "sessionAttributes": {}
-	}
-    
-    
-    
+      "version": "1.0",
+      "response": {
+        "outputSpeech": {
+          "type": "PlainText",
+          "text": output_text
+        },
+        "card": {
+          "content": output_text,
+          "title": title,
+          "type": "Simple"
+        },
+        "reprompt": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": ""
+          }
+        },
+        "shouldEndSession": should_end_session
+      },
+      "sessionAttributes": {}
+    }
