@@ -12,24 +12,23 @@ def lambda_handler(event, context):
         
     ## Handle the bare launch intent
     if(event["request"]["type"] == "LaunchRequest"):
-        return build_response("Last Episode", "Welcome to Last Episode. Ask me about a T.V. series. For example, you can say<break time='100ms' strength='weak'/>When was the last episode of How I Met Your Mother?", False)
+        return build_response("Last Episode", "Welcome to Last Episode. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", False)
         
     intent_name = event["request"]["intent"]["name"]
     
     ## Handle the help intent
-    if intent_name == "AMAZON.HelpIntent":
-        return build_response("Last Episode", "Welcome to Last Episode. Ask me about a T.V. series. For example, you can say<break time='100ms' strength='weak'/>When was the last episode of How I Met Your Mother?", False)
+    if intent_name == "AMAZON.HelpIntent" or intent_name == "TroubleshootIntent":
+        return build_response("Last Episode", "Welcome to Last Episode. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", False)
     
     ## Handle the stop intent
     elif intent_name == "AMAZON.StopIntent" or intent_name == "AMAZON.CancelIntent":
         return build_response( "Thanks!", "Thanks for using Last Episode. Goodbye!", True)
-        
-    ## Handle the "help" command
-    elif intent_name == "TroubleshootIntent":
-      return build_response("Last Episode", "Welcome to Last Episode. Ask me about a T.V. series. For example, you can say<break time='100ms' strength='weak'/>When was the last episode of How I Met Your Mother?", False)
     
     elif intent_name == "GetLastEpisodeIntent":
-        return query_series(event["request"]["intent"]["slots"]["series_name"]["value"])
+        if "value" in event["request"]["intent"]["slots"]["series_name"] and event["request"]["intent"]["slots"]["series_name"]["value"] != '':
+            return query_series(event["request"]["intent"]["slots"]["series_name"]["value"])
+        else:
+            return build_response("Last Episode", "Sorry, I didn't quite get that. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", False)
         
 def query_series(series_name):
     title = "Last Episode of " + series_name
@@ -37,10 +36,15 @@ def query_series(series_name):
     should_end_session = True
     
     api_url = API_BASE + "singlesearch/shows?" + urllib.urlencode({"q": series_name})
-
-    response = urllib2.urlopen(api_url)
-  
+    
+    try:
+        response = urllib2.urlopen(api_url)
+    except urllib2.HTTPError, e:
+        return build_response("Last Episode", "Sorry, I didn't quite get that. Ask me about a T.V. series. For example, when was the last episode of How I Met Your Mother?", False)
+    
     series_data = json.load(response)
+    
+    #return series_data
 
     prev_ep_link = series_data["_links"]["previousepisode"]["href"]
 
@@ -66,24 +70,24 @@ def query_series(series_name):
     
 def build_response( title, output_text, should_end_session ):
     return {
-    "version": "1.0",
-    "response": {
-      "outputSpeech": {
-        "type": "PlainText",
-        "text": output_text
-      },
-      "card": {
-        "content": output_text,
-        "title": title,
-        "type": "Simple"
-      },
-      "reprompt": {
+      "version": "1.0",
+      "response": {
         "outputSpeech": {
           "type": "PlainText",
-          "text": ""
-        }
+          "text": output_text
+        },
+        "card": {
+          "content": output_text,
+          "title": title,
+          "type": "Simple"
+        },
+        "reprompt": {
+          "outputSpeech": {
+            "type": "PlainText",
+            "text": ""
+          }
+        },
+        "shouldEndSession": should_end_session
       },
-      "shouldEndSession": should_end_session
-    },
-    "sessionAttributes": {}
-  }
+      "sessionAttributes": {}
+    }
