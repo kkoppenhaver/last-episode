@@ -44,8 +44,6 @@ def query_series(series_name):
     
     series_data = json.load(response)
     
-    #return series_data
-
     prev_ep_link = series_data["_links"]["previousepisode"]["href"]
 
     prev_ep_response = urllib2.urlopen(prev_ep_link)
